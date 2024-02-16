@@ -1,0 +1,102 @@
+<html>
+	<head>
+<title>Form has been submitted</title>
+		<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=us-ascii">
+
+	</head>
+
+	<body>
+		<img src = "..\HTMLResults\ReportInfo\Images\logo_en.jpg">
+		<hr>
+		<form name = "ConfigurationValues">
+			<table cellpadding="2" cellspacing="0" width="390" border="0">
+				<tr><td colspan="2"><b><Font Face = Verdana Size = "3"> Enter few details before you proceed... </b></FONT></td></tr>
+				<tr>
+					<td width="150px"><b><Font Face = Verdana Size = "2">Enter Release Name</b></td>
+					<td><INPUT type="text" name="Release" value="Maintenance" FieldIdentifier="QTP" ValidationRule=""></td>
+				</tr>
+				<tr>
+					<td width="150"><b><Font Face = Verdana Size = "2"> Select User Name</b></FONT></td>
+					<td><select name="AppUserName" FieldIdentifier="QTP" ValidationRule="">
+						<option value = "kailasak">kailasak</option>
+						<option value = "lrunner">lrunner</option>
+						<option value = "tadiboyg">tadiboyg</option>
+						<option value = "gogiredv">gogiredv</option>
+						<option value = "tallaprb">tallaprb</option>
+						<option value = "mayabraV">mayabraV</option>
+						<option value = "nadellas">nadellas</option>
+						<option value = "nadagirp">nadagirp</option>
+				</tr>
+				<tr>
+					<td width="150px"><b><Font Face = Verdana Size = "2">Enter User Password</b></td>
+					<td><INPUT type=password name="AppPassword" FieldIdentifier="QTP" ValidationRule=""></td>
+				</tr>
+				<tr>
+					<td><b><Font Face = Verdana Size = "2">Select Region</b></FONT></td>
+					<td><select name="Region" FieldIdentifier="QTP" ValidationRule="">
+						<option value = "IST1" selected>IST1</option>
+						<option value = "IST2">IST2</option>
+						<option value = "QA">QA</option>
+						<option value = "Retro">Retro</option>
+						<option value = "RETRO2">RETRO2</option>
+						<option value = "Dev4">Dev4</option>
+						</select></td>
+				</tr>
+				<tr>
+					<td width="160px"><b><Font Face = Verdana Size = "2">Enter DB2 User Name</b></td>
+					<td><INPUT type=DBUserName name="DBUserName" FieldIdentifier="QTP" ValidationRule=""></td>
+				</tr>
+				<tr>
+					<td width="150px"><b><Font Face = Verdana Size = "2">Enter DB2 Password</b></td>
+					<td><INPUT type=password name="DBPassword" FieldIdentifier="QTP" ValidationRule=""></td>
+				</tr>
+				<tr>
+					<td><b><Font Face = Verdana Size = "2">Select Execution Type</b></FONT></td>
+					<td><select NAME="ApplicableScript" id="ApplicableScript">
+						<option selected="selected" value="Select">Select</option>
+						<option value = "Simple Scenarios">Simple Scenarios</option>
+						<option value = "Complex Scenarios">Complex Scenarios</option></select></td>
+				</tr>
+
+
+
+				<tr>
+
+					<td><b><Font Face = Verdana Size = "2">Select Execution Flow for SS</b></FONT></td>
+					<td><select NAME="SimpleScenario" id="SimpleScenario" Disabled>
+						<option selected="selected" value="Select">Select</option>
+						<option value = "Fetch Policies and Execute">Fetch Policies and Execute</option>
+						<option value = "Direct Execution">Direct Execution</option></select></td>
+
+			</tr>
+
+
+
+				<tr>
+
+					<td><b><Font Face = Verdana Size = "2">Select Execution Flow for CS</b></FONT></td>
+					<td><select NAME="ComplexScenario" id="ComplexScenario" Disabled>
+						<option selected="selected" value="Select">Select</option>
+						<option value = "Fetch Policies">Fetch Policies</option>
+						<option value = "Direct Execution">Direct Execution</option>
+						<option value = "Prepare MVR Data">Prepare MVR Data</option>
+						<option value = "PLCS CLAIMS Segregation">PLCS CLAIMS Segregation</option></select></td>
+
+				</tr>
+
+				<tr>
+					<td width="150px"><b><Font Face = Verdana Size = "2">Upload result to SQL DB?</b></td>
+					<td><INPUT type="radio" name="UploadToDB" value="True" FieldIdentifier="QTP" ValidationRule="">Yes &nbsp;&nbsp;
+						<INPUT type="radio" name="UploadToDB" value="False" checked FieldIdentifier="QTP" ValidationRule="">No</td>
+				</tr>
+
+				<tr>
+					<td align="middle" colspan="2">
+						<input type="submit" value="    OK    " name="btnUserAccepted" ID=Submit1  Disabled >
+						<input type="submit" value="CANCEL" name="btnUserCancelled" ID=Submit2></td>
+				</tr>
+			</table>
+		</form>
+		<hr>
+		<p><font face="Verdana" color="red" size="3"><b>Please don't refresh the page!!!</b></font></p>
+	</body></html>

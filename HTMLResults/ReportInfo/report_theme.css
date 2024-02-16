@@ -1,0 +1,321 @@
+body
+{
+font-size: 70%;
+color:#000000;
+margin:10px;
+}
+
+body, p, h1, h2, h3, table, td, th, ul, ol, textarea, input
+{
+font-family: verdana,helvetica,arial,sans-serif;
+}
+
+table, input, textarea
+{
+font-size: 100%;
+}
+
+a {text-decoration: none}
+
+table.rephead
+{
+font-size: 200%;
+font-weight:bold;
+color:#000000;
+padding:3px;
+border:0px none;
+border-collapse:collapse;
+}
+
+table.tsteps
+{
+background-color:transparent;
+color:#000000;
+border:1px solid #000000;
+border-collapse:collapse;
+}
+
+table.subhead
+{
+border:0px;
+background-color:transparent;
+border-collapse:collapse;
+}
+
+table.tbtime
+{
+background-color:transparent;
+color:#000000;
+border:1px solid #000000;
+border-collapse:collapse;
+position:absolute;
+left:335px;
+}
+
+table.pfsummary
+{
+background-color:transparent;
+color:#000000;
+border:1px solid #000000;
+border-collapse:collapse;
+position:absolute;
+left:660px;
+}
+
+table.tblinks
+{
+background-color:transparent;
+color:#000000;
+border:1px solid #000000;
+border-collapse:collapse;
+}
+
+td.subhead
+{
+font-size:120%;
+font-weight:bold;
+padding-top:5px;
+padding-bottom:1px;
+background-color:transparent;
+}
+
+td.subcont
+{
+font-size:120%;
+padding-top:1px;
+padding-bottom:1px;
+background-color:transparent;
+}
+
+td.tshead
+{
+color:#ffffff;
+background-color:#6699CC;
+font-size: 120%;
+font-weight:bold;
+text-align:center;
+padding: 0px 0px 0px 0px;
+border:1px solid #000000;
+}
+
+td.tsnorm
+{
+font-size: 100%;
+font-weight:normal;
+padding-left:2px;
+border:1px solid #000000;
+}
+
+td.tsnormfail
+{
+font-size: 100%;
+font-weight:bold;
+color:FireBrick;
+padding-left:2px;
+border:1px solid #000000;
+}
+
+td.tsnormlvl1
+{
+font-size: 100%;
+font-weight:normal;
+padding-left:2px;
+border:1px solid #000000;
+background-color: LightSteelBlue;
+}
+
+td.tsnormfaillvl1
+{
+font-size: 100%;
+font-weight:bold;
+color:FireBrick;
+padding-left:2px;
+border:1px solid #000000;
+background-color: LightSteelBlue;
+}
+
+td.tsind
+{
+font-size: 100%;
+font-weight:normal;
+padding-left:15px;
+padding-right: 2px;
+border:1px solid #000000;
+}
+
+td.tsindfail
+{
+font-size: 100%;
+font-weight:bold;
+color:FireBrick;
+padding-left:15px;
+padding-right: 2px;
+border:1px solid #000000;
+}
+
+td.tsindlvl1
+{
+font-size: 100%;
+font-weight:normal;
+padding-left:15px;
+padding-right: 2px;
+border:1px solid #000000;
+background-color: LightSteelBlue;
+}
+
+td.tsindfaillvl1
+{
+font-size: 100%;
+font-weight:bold;
+color:FireBrick;
+padding-left:15px;
+padding-right: 2px;
+border:1px solid #000000;
+background-color: LightSteelBlue;
+}
+
+td.tsindlvl2
+{
+font-size: 100%;
+font-weight:normal;
+padding-left:25px;
+padding-right: 2px;
+border:1px solid #000000;
+}
+
+
+td.tsindfaillvl2
+{
+font-size: 100%;
+font-weight:bold;
+color:FireBrick;
+padding-left:25px;
+padding-right: 2px;
+border:1px solid #000000;
+}
+
+td.tsindlvl3
+{
+font-size: 100%;
+font-weight:normal;
+padding-left:35px;
+padding-right: 2px;
+border:1px solid #000000;
+}
+
+td.tsindfaillvl3
+{
+font-size: 100%;
+font-weight:bold;
+color:FireBrick;
+padding-left:35px;
+padding-right: 2px;
+border:1px solid #000000;
+}
+
+td.tsinfo
+{
+font-size: 100%;
+font-weight:bold;
+color:RoyalBlue;
+padding-left:2px;
+border: 1px solid #000000;
+border-left solid none
+}
+
+td.tswarning
+{
+font-size: 100%;
+font-weight:bold;
+color:OrangeRed;
+padding-left:2px;
+border: 1px solid #000000;
+border-left solid none
+}
+
+td.tsimgalert
+{
+font-size: 100%;
+font-weight:bold;
+color:OrangeRed;
+text-align:center;
+border: 1px solid #000000;
+border-right solid none
+}
+
+td.pfhead
+{
+color:#000000;
+background-color:LightSteelBlue;
+font-size: 120%;
+font-weight:bold;
+text-align:left;
+border:1px solid #000000;
+}
+
+td.pfind
+{
+font-size: 100%;
+font-weight:normal;
+padding-left:20px;
+border:1px solid #000000;
+}
+
+hr.divline
+{
+width:900px;
+position:absolute;
+left:0px;
+border:1px solid DarkSeaGreen;
+margin-top: 4px;
+margin-left: 10px;
+}
+
+h3.indexhead
+{
+margin: 10px 2px 2px 2px;
+font-size: 150%;
+}
+
+b.highlight
+{
+	font-size: 125%;
+}
+
+div {width:100%;}
+
+a.anibutton:link, a.anibutton:visited
+{
+color: #000000;
+border: 0px none;
+text-align: center;
+background-color:transparent;
+text-decoration: none;
+padding: 0px 0px 0px 0px;
+}
+
+a.anibutton:hover
+{
+color: #0000FF;
+border: 2px outset;
+background-color:transparent;
+text-decoration: none;
+padding: 1px 1px 1px 1px;
+line-height: 300%;
+}
+
+img.screen
+{
+width: 20px;
+height: 20px;
+border: 0px none;
+background-color:transparent;
+}
+
+img.message
+{
+width: 32px;
+height: 32px;
+border: 3px 3px 3px 3px;
+background-color:transparent;
+}

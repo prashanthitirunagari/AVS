@@ -1,0 +1,890 @@
+' #####################################################################################################
+'	LIBRARY NAME		: LibExcelFunctions
+'
+'	DESCRIPTION			: This library contains excel funtions
+'
+'	INCLUDED FUNCTIONS	:
+'		Public Function Emulator_diaryRun()
+'		Private Function dairyRun()
+'		Private Function SelectDairy()
+'		Private Function ExecuteDairy()
+'       Private Function FindSCDiaryandRun()
+'		Private Function InitializeEmulator()
+'		Private Function ExitEmulator()
+'      Public Function StringWait()
+'		Public Function ReflectionHandleRC(ByVal ReturnCode)
+
+'''#####################################################################################################
+Option Explicit
+''#####################################################################################################
+
+'#####################################################################################################
+'#					 P U B L I C   V A R I A B L E   D E C L A R A T I O N
+'#####################################################################################################
+'		(none)
+
+'#####################################################################################################
+'#					 P R I V A T E   V A R I A B L E   D E C L A R A T I O N
+'#####################################################################################################
+Private tmpRes
+Private Quick3270, Session, Screen
+Private EnvString, ServerIP, DRString,ServerHostName
+Private ResMessage, eMessage, rc
+'#####################################################################################################
+'
+'#####################################################################################################
+'#					 CLASS DECLARATION  FOR REFLECTION CHANGES.
+'#####################################################################################################
+Class ReflecitonClass
+
+	'Public variable to be initiazed with reflection object.
+	Public ReflectionIBM
+
+	' Wrapper function to the similar function in Quick3270 WaitForString .
+Public 	Function WaitForString(byval Strng ,byval  Row ,byval Col )
+	 Dim TEMPRES,tmrStart,tmrDelay,tmrEnd
+		'On Error GoTo errorhandle:
+		On Error resume next
+		WaitForString =False
+		wait 2
+		tmrDelay=200
+		  tmrStart=timer
+		 ' Err.Number=0
+		  
+		Do 
+			 Err.clear
+			TEMPRES = ReflectionIBM.WaitForDisplayString(Strng, 10, Row, Col)
+			'WaitForString = True
+'			If Err.Number <> 4087 then WaitForString = True
+'
+'			If WaitForString <> True Then
+			
+             If  (timer-tmrStart) < tmrDelay Then
+					WaitForString = True
+					'Reportstep 2, "Diary Run","Should wait for string: <b>" & Strng & "</b> " ," String: <b>"& Strng & " </b> found within " & tmrDelay & " seconds"
+				 Else
+					WaitForString = False
+					ReflectionHandleRC micFail
+					Reportstep 2, "Diary Run","Should wait for string: <b>" & Strng & " </b> " ," String: <b>"& Strng & " </b> not found in " & tmrDelay & " seconds"
+					Exit function
+				End If
+'			end if
+		Loop while  Err.Number<>0
+		
+
+
+			
+'		tmrStart=timer
+'		If  WaitForString <> True Then
+'			Do while WaitForString<>true
+'			tmrEnd=timer
+'			If  (tmrEnd-tmrStart) > 30Then
+'				WaitForString = False
+'				Exit function
+'			End If
+' 			TEMPRES = ReflectionIBM.WaitForDisplayString(Strng, 10, Row, Col)
+'	 		if Err.Number <> 4087 then WaitForString = True
+'
+'			Loop
+'		End If
+		'Exit Function
+	'errorhandle:
+		If Err.Number = 4087 And Err.Description = "A command to wait for an event timed out" Then ' String searcin for is now found
+
+			WaitForString = False
+		ElseIf Err.Number <> 0 Then ' Unknown error message
+			Err.Raise err.number
+		else
+			WaitForString = True 'String Found
+		End If
+	End Function
+
+	' Wrapper function to the similar function in Quick3270 SendKeys .
+ Public Function SendKeys(byval strKey)
+		'On Error GoTo errorhandle:
+        On Error resume next
+		wait 2
+			If strKey = "<Tab>" Then
+			   'Const rcIBMTabKey = 405  (&H195)
+			  ReflectionIBM.TransmitTerminalKey 405
+			  SendKeys = 0
+			  Exit Function
+			  'Const rcIBMPf3Key = 380 (&H17C)
+			ElseIf strKey = "<Pf3>" Then
+			  ReflectionIBM.TransmitTerminalKey 380
+			  SendKeys = 0
+			  Exit Function
+			  'Const rcIBMEnterKey = 289 (&H121)
+			ElseIf strKey = "<Enter>" Then
+			  ReflectionIBM.TransmitTerminalKey 289
+			  SendKeys = 0
+			  Exit Function
+			' Const rcIBMResetKey = 393 (&H189)
+		   ElseIf strKey = "<Esc>" Then
+			  'ReflectionIBM.TransmitTerminalKey 393
+			  SendKeys = 0
+			  Exit Function
+			Else
+				ReflectionIBM.TransmitANSI strKey
+				SendKeys = 0
+				Exit Function
+			End If
+			
+		'errorhandle:
+			If err.number <> 0 Then
+					SendKeys = 1
+			End If
+			
+			'Exit Function
+End Function
+
+	' Wrapper function to the similar function in Quick3270 MoveTo .
+Public Function MoveTo(byval intRow,byval  intCol)
+   wait 2
+    ReflectionIBM.SetMousePos intRow, intCol
+	ReflectionIBM.TerminalMouse 1,-1,-1
+End Function
+
+	' Wrapper function to the similar function in Quick3270 GetString .
+Public Function GetString(byval intRow,byval intCol,byval intLen)
+   wait 2
+    GetString = ReflectionIBM.GetDisplayText(intRow, intCol, intLen)
+End Function
+
+End Class
+
+'################################################################################################################################
+'	FUNCTION NAME		: Emulator_diaryRun()
+
+'	DESCRIPTION			: Public Function which invokes emulator and runs the dairy based on the parameters provided..
+
+'	PARAMETERS			: TCase - Test Case Name
+'												App --- Application ............ valid values "APS"
+'												Region --- Region ............. valid values "IST2","RETRO2","QA"
+'												UserID - UserID of the mainframes screen
+'												Passwd-- Password
+'												PolicyNum -- Policy Number
+'												diaryRunString -- Valid Values are ------ "Schedule","Renewal","SurCharge" ......... can give multiple options with ";" as separator
+
+'	DEPENDENCIES		: Execution machine should have Quick3270 Application installed.
+
+' 	RETURN VALUE(S): 
+'		micPass	 		: On successful execution of the function
+'		micFail	 		: On unsuccessful execution of the function
+
+'	ERRORS				: (None)
+
+'	AUTHOR				: Ramu Gurrapu
+
+'	ORIGINAL DATE		: Sep 18, 2008
+'-----------------------------------------------------------------------------------------------------------------------
+'			R E V I S I O N    H I S T O R Y
+'-----------------------------------------------------------------------------------------------------------------------
+'	REVISED DATE	: 	REVISED BY	 :	CHANGE DESCRIPTION
+'-----------------------------------------------------------------------------------------------------------------------
+'  03-25-2009					Prashanthi Nandagiri            Updated If  condition if any diary is not found
+'-------------------------------------------------------------------------------------------------------------------------
+Public Function Emulator_diaryRun(ByVal TCase, ByVal App, ByVal Region, ByVal UserID, ByVal PassWD, ByVal PolicyNum, ByVal diaryRunString)
+    
+	'On Error Resume Next 
+
+    Dim DBKeyString, FinalMsg
+    Dim tmpIter, tmpWait
+
+
+    'Reporting 
+    rc = ReportStep(1,"Reflection DB2 Dairy Run","","")
+    
+    rc = InitializeEmulator (App, Region)
+	If rc <> micPass Or IsObject(Quick3270)=False Then 
+		ReflectionHandleRC micFail
+		Emulator_diaryRun = micFail
+		ReportStep 2, diaryRunString & " Wait For the Screen","Expected Screen Should be Displayed.","Sync Error : Expected Screen Not Displayed." & eMessage
+		ExitEmulator
+		Exit Function
+	End If
+    
+    'Entering String SWITH and Passing UserID and PassWord
+    With Screen
+        .SendKeys (EnvString)
+        .SendKeys ("<Enter>")
+
+				rc = StringWait ("User", 8, 9, "Step : Login Screen - After SWITCH") 'Waits for USER ID Screen
+				If rc <> micPass Or  IsObject(Quick3270)=False Then 
+					ReflectionHandleRC rc
+					Emulator_diaryRun = rc
+					ReportStep 2, diaryRunString & " Wait For the Screen","Expected Screen Should be Displayed.","Sync Error : Expected Screen Not Displayed." & eMessage
+					ExitEmulator
+					Exit Function
+				End If
+				 
+             .Moveto 8, 26
+        .SendKeys (UserID)
+    End With
+    
+   ' If Len(Trim(UserID)) < 8 Then Session.Screen.SendKeys ("<Tab>")
+    If Len(Trim(UserID)) < 8 Then Screen.SendKeys ("<Tab>")
+        
+    'Passing Env Command String & diary Run Command String
+    With Screen
+        .SendKeys (PassWD)
+        .SendKeys ("<Enter>")
+
+            rc = StringWait ("Welcome", 3, 9, "Current Step: Connected to Enviroment : Waiting for Next Screen")            'Waits for Welcome Screen"
+			 If rc <> micPass Or  IsObject(Quick3270)=False Then 
+					ReflectionHandleRC rc
+					Emulator_diaryRun = rc
+					ReportStep 2, diaryRunString & " Wait For the Screen","Expected Screen Should be Displayed.","Sync Error : Expected Screen Not Displayed." & eMessage
+					ExitEmulator
+					Exit Function
+			End If
+			
+        .SendKeys (DRString)
+        .SendKeys ("<Enter>")
+'		.SendKeys("<Esc>") ' Added for Reflection
+
+				rc = StringWait("List", 6, 2, "Current Step: AL22 Entered : Waiting for Policy Number Screen")                'Waits for Policy Number Screen"
+				   .SendKeys("<Esc>") ' Added for Reflection
+				 If rc <> micPass Or  IsObject(Quick3270)=False Then 
+					ReflectionHandleRC rc
+					Emulator_diaryRun = rc
+					ReportStep 2, diaryRunString & " Wait For the Screen","Expected Screen Should be Displayed.","Sync Error : Expected Screen Not Displayed." & eMessage
+					ExitEmulator
+					Exit Function
+				End If
+				
+    End With
+    
+    'Code to Enter the Policy Number after DB2 Key String....
+   ' DBKeyString = Trim(Session.Screen.GetString(12, 8, 10))
+    DBKeyString = Trim(Screen.GetString(12, 8, 10))
+    If UCase(DBKeyString) = UCase("DB KEY") Then
+        With Screen
+            .Moveto 12, 8
+            .SendKeys ("<Tab>")
+            .SendKeys (PolicyNum)
+            .SendKeys ("<Enter>")
+			 .SendKeys("<Esc>") ' Added for Reflection
+        End With
+    End If
+            
+		'code to find out how many daires needs to run...
+		diaryRunString = Split(diaryRunString, ";")
+		For tmpIter = 0 To UBound(diaryRunString)
+			rc = diaryRun(diaryRunString(tmpIter))
+
+			If rc <> micPass and (diaryRunString(tmpIter) = "MVR" or diaryRunString(tmpIter) = "AUS" or diaryRunString(tmpIter) = "SURCHARGE") Then
+					 rc =micPass
+                    ReportStep 2, diaryRunString(tmpIter) &" Diary ","Diary Should Execute Successfully.", "<b>"&"Diary was not found in the list"&"</b>"
+                  
+					'ExitEmulator
+				   ' Exit Function
+					
+		   ElseIf rc <> micPass Then
+				ReflectionHandleRC rc
+				FinalMsg = "Dairy Execution Failed for Diary "& diaryRunString(tmpIter) & "   :::    Error Message:" & eMessage
+				ReportStep 2, diaryRunString(tmpIter) &" Diary ","Diary Should Execute Successfully.", FinalMsg
+				Emulator_diaryRun = micFail
+				ExitEmulator
+				Exit Function
+			Else
+				ReportStep 2, diaryRunString(tmpIter) & " Diary ","Diary Should Execute Successfully.","Dairy Executed Successfully."
+				Emulator_diaryRun = micPass
+			End If
+
+		Next
+    
+		ExitEmulator	
+
+End Function
+'################################################################################################################################
+'	FUNCTION NAME		: diaryRun()
+
+'	DESCRIPTION			: Public Function which invokes emulator and runs the dairy based on the parameters provided..
+
+'	PARAMETERS		   : diaryString
+
+'	DEPENDENCIES		: Execution machine should have Quick3270 Application installed.
+
+' 	RETURN VALUE(S): 
+'		micPass	 		: On successful execution of the function
+'		micFail	 		: On unsuccessful execution of the function
+
+'	ERRORS				: (None)
+
+'	AUTHOR				: Ramu Gurrapu
+
+'	ORIGINAL DATE		: Sep 18, 2008
+'-----------------------------------------------------------------------------------------------------------------------
+'			R E V I S I O N    H I S T O R Y
+'-----------------------------------------------------------------------------------------------------------------------
+'	REVISED DATE	: 	REVISED BY	 :	CHANGE DESCRIPTION
+'-----------------------------------------------------------------------------------------------------------------------
+'14-May-2009                  Prashanthi Nandagiri		Included code to verify whether diarycode is null or not
+'-----------------------------------------------------------------------------------------------------------------------
+
+Private Function diaryRun(ByVal diaryString)
+
+On Error Resume Next
+
+	Dim stRow, FoundDiary
+	Dim diaryCode, rc
+    
+    rc = StringWait ("Enter", 7, 2, "Waiting at diaries list Screen")               'Waits for diary list screen
+
+	'Error Handling -- If Stringwait fails exit the function 
+	If rc <> micPass Or IsObject(Quick3270)=False Then 
+		diaryRun = micFail
+		Exit Function
+	End If
+	
+    stRow = 11
+    FoundDiary = False
+    Do While Trim(Screen.GetString(stRow, 5, 9)) <> vbNullString
+        diaryCode = Trim(Screen.GetString(stRow, 5, 4))
+
+        If diaryCode = NULL or diaryCode =  vbNullString Then
+			diaryRun = micFail
+			Exit Function
+		End If
+		
+        If UCase(Trim(diaryString)) = Ucase("RENEWAL") And Trim(diaryCode) = "Z40A" Then
+			rc = SelectDairy (stRow)
+			If rc<>micPass Or IsObject(Quick3270)=False Then
+				ReflectionHandleRC micFail
+				diaryRun = micFail
+				Exit Function
+			End If
+
+            rc = ExecuteDairy(diaryString, diaryCode)
+			If rc<>micPass Or IsObject(Quick3270)=False Then
+				ReflectionHandleRC micFail
+				diaryRun = micFail
+				Exit Function
+			Else
+				FoundDiary = True
+			End If
+            Exit Do
+            
+        ElseIf Ucase(Trim(diaryString)) = Ucase("Schedule") And Trim(diaryCode) = "Z405" Then
+            rc =SelectDairy (stRow)
+			 If rc<>micPass Or IsObject(Quick3270)=False Then
+				diaryRun = micFail
+				Exit Function
+			End If
+
+            rc = ExecuteDairy(diaryString, diaryCode)
+			If rc<>micPass Or IsObject(Quick3270)=False Then
+				ReflectionHandleRC micFail
+				diaryRun = micFail
+				Exit Function
+			Else
+				FoundDiary = True
+			End If
+            Exit Do
+
+        'ElseIf UCase(Trim(diaryString)) = Ucase("SurCharge")  And Trim(diaryCode) = "W40A" Then
+        ElseIf (UCase(Trim(diaryString)) = Ucase("SurCharge") or UCase(Trim(diaryString)) = "AUS" or UCase(Trim(diaryString)) = "MVR") And Trim(diaryCode) = "W40A" Then
+
+            rc = FindSCDiaryandRun (stRow, diaryCode, diaryString)
+			If rc<>micPass Or IsObject(Quick3270)=False Then
+				'ReflectionHandleRC micFail
+				eMessage = diaryString & " Diary not found in the Diaries List."
+				diaryRun = micFail
+				Exit Function
+			Else
+				FoundDiary = True
+			End If
+            Exit Do
+            
+        End If
+    
+    stRow = stRow + 1
+    Loop
+    
+    If FoundDiary = False Then 
+		 ReflectionHandleRC micFail
+		diaryRun = micFail
+		ExitEmulator
+		eMessage = diaryString & " Diary not found in the Diaries List."
+   Else
+		diaryRun = micPass
+    End If
+
+End Function
+
+'################################################################################################################################
+'	FUNCTION NAME		: SelectDairy()
+
+'	DESCRIPTION			: Public Function which invokes emulator and runs the dairy based on the parameters provided..
+
+'	PARAMETERS		   : RowtoSelect --- Row in which dairy exists
+
+'	DEPENDENCIES		: Execution machine should have Quick3270 Application installed.
+
+' 	RETURN VALUE(S): 
+'		micPass	 		: On successful execution of the function
+'		micFail	 		: On unsuccessful execution of the function
+
+'	ERRORS				: (None)
+
+'	AUTHOR				: Ramu Gurrapu
+
+'	ORIGINAL DATE		: Sep 18, 2008
+'-----------------------------------------------------------------------------------------------------------------------
+'			R E V I S I O N    H I S T O R Y
+'-----------------------------------------------------------------------------------------------------------------------
+'	REVISED DATE	: 	REVISED BY	 :	CHANGE DESCRIPTION
+'-----------------------------------------------------------------------------------------------------------------------
+
+Private Function SelectDairy(ByVal RowtoSelect)
+
+    With Screen
+        .MoveTo RowtoSelect, 2
+        .SendKeys ("X")
+        .SendKeys ("<Enter>")
+		
+        rc = StringWait ("Process", 7, 2, "Current Step : Diary Selected : Waiting for Next Screen")
+		.SendKeys("<Esc>") ' Added for Reflection
+		If rc <> micPass Or IsObject(Quick3270)=False Then 
+			SelectDairy = micFail
+			Exit Function
+		Else
+			SelectDairy = micPass
+		End If   
+		
+     End With
+
+End Function
+'################################################################################################################################
+'	FUNCTION NAME		: ExecuteDairy()
+
+'	DESCRIPTION			: Finds surcharge dairy and executes if it found
+
+'	PARAMETERS         :  DiaryCode - dairy code of the dairy
+
+'	DEPENDENCIES		: Execution machine should have Quick3270 Application installed.
+
+' 	RETURN VALUE(S): 
+'		micPass	 		: On successful execution of the function
+'		micFail	 		: On unsuccessful execution of the function
+
+'	ERRORS				: (None)
+
+'	AUTHOR				: Ramu Gurrapu
+
+'	ORIGINAL DATE		: Sep 19, 2008
+'-----------------------------------------------------------------------------------------------------------------------
+'			R E V I S I O N    H I S T O R Y
+'-----------------------------------------------------------------------------------------------------------------------
+'	REVISED DATE	: 	REVISED BY	 :	CHANGE DESCRIPTION
+'-----------------------------------------------------------------------------------------------------------------------
+
+Private Function ExecuteDairy(ByVal DiaryStr,ByVal DairyCode)
+
+    Dim ResString, ExpString, ErrString
+    
+    ExpString = "Transaction " & Trim(DairyCode) & " was started at terminal"
+    
+    With Screen
+        
+        rc = StringWait ("Process", 7, 2, "Current Step : Diary Selected : Waiting for Next Screen")
+		If rc <> micPass Or IsObject(Quick3270)=False Then 
+			ExecuteDairy = micFail
+            Exit Function
+		End If  
+		
+        .MoveTo 7, 22
+        .SendKeys ("S")
+        .SendKeys ("<Enter>")
+
+	    wait 5 'Added for Reflection
+
+	   ' .SendKeys("<Esc>") ' Added for Reflection
+
+		rc = StringWait ("Transaction", 22, 19, "Current Step: Diary Ran. Waiting for Next Screen")
+		
+		   .SendKeys("<Esc>") ' Added for Reflection
+        If rc <> micPass Or IsObject(Quick3270)=False Then 
+			ExecuteDairy = micFail
+			Exit Function
+		End If  
+		
+        ResString = Trim(Screen.GetString(22, 2, 90))
+
+		If InStr(1, ResString, ExpString) <> 0 Then
+
+'************************** COMMENTED FOR REFLECTION********************
+			.SendKeys ("<Enter>") 'Commented for Reflection
+
+			wait 3
+			'rc = Screen.WaitForCursor(7, 22)
+
+'			If rc <> True Then
+'				ExecuteDairy = micFail
+'                Exit Function
+'			End If
+'
+		.SendKeys("<Esc>") ' Added for Reflection
+		ErrString = Trim(Screen.GetString(18,22,55))
+
+			If ErrString <> vbNullString Then
+				ExecuteDairy = micFail
+				ReflectionHandleRC micFail
+				eMessage = ErrString
+				Exit Function
+			End If
+'************************** COMMENTED FOR REFLECTION END********************			
+			.SendKeys "<Pf3>"                         																									  		   'Dairy Run SuccessFully. Go back to the dairy screen
+
+			'.SendKeys("<Esc>") ' Added for Reflection
+			
+			rc = StringWait ("Enter", 7, 2, "Current Step : Diary Ran : Waiting for Next Screen")              'Waits for diary list screen
+			
+			   .SendKeys("<Esc>") ' Added for Reflection
+
+			If rc <> micPass Or IsObject(Quick3270)=False Then 
+				ExecuteDairy = micFail
+				Exit Function
+			Else
+				ExecuteDairy = micPass
+			End If  			
+			
+        End If
+        
+    End With
+            
+End Function
+
+
+'################################################################################################################################
+'	FUNCTION NAME		: FindSCDiaryandRun()
+
+'	DESCRIPTION			: Finds surcharge dairy and executes if it found
+
+'	PARAMETERS		   : stRow --- Start Row of the dairy list
+'											  Dcode - dairy code of the surcharge
+
+'	DEPENDENCIES		: Execution machine should have Quick3270 Application installed.
+
+' 	RETURN VALUE(S): 
+'		micPass	 		: On successful execution of the function
+'		micFail	 		: On unsuccessful execution of the function
+
+'	ERRORS				: (None)
+
+'	AUTHOR				: Ramu Gurrapu
+
+'	ORIGINAL DATE		: Sep 19, 2008
+'-----------------------------------------------------------------------------------------------------------------------
+'			R E V I S I O N    H I S T O R Y
+'-----------------------------------------------------------------------------------------------------------------------
+'	REVISED DATE	: 	REVISED BY	 :	CHANGE DESCRIPTION
+'-----------------------------------------------------------------------------------------------------------------------
+
+Private Function FindSCDiaryandRun(ByVal stRow, ByVal DCode, ByVal diaryString)
+
+	On Error Resume Next
+
+    Dim SurChargeString, SCDairy,stDiaryCode
+
+	'Nov 1st, added this code to handle AIS and MVR diaries
+		If ucase(diaryString) ="SURCHARGE"Then
+				stDiaryCode="852"
+		ElseIf ucase(diaryString) ="AUS"Then
+				stDiaryCode="850"
+				ElseIf ucase(diaryString) ="MVR"Then
+				stDiaryCode="854"
+		End If
+	
+    
+    stRow = 11
+    SCDairy = True
+    Do While Trim(Screen.GetString(stRow, 5, 9)) <> vbNullString And Trim(Screen.GetString(stRow, 5, 4)) = "W40A"
+        SurChargeString = vbNullString
+
+			rc = SelectDairy (stRow)
+			If rc<>micPass Or IsObject(Quick3270)=False Then
+				FindSCDiaryandRun = micFail
+				Exit Function
+			End If
+			            
+            With Screen
+                SurChargeString = .GetString(12, 22, 3)
+                SurChargeString = Trim(SurChargeString)
+                'If SurChargeString = 852 Then
+				If SurChargeString = stDiaryCode Then
+					SCDairy = True
+
+                    rc =ExecuteDairy(diaryString,DCode)
+					If rc <> micPass Or IsObject(Quick3270)=False Then 
+						FindSCDiaryandRun = micFail
+						Exit Function
+					Exit Do
+				End If
+					
+                Exit Do
+                Else
+                    Screen.SendKeys "<Pf3>"
+
+                    rc = StringWait ("Enter", 7, 2, "Waits at diaries list Screen")
+				   Screen.SendKeys("<Esc>") ' Added for Reflection
+					If rc <> micPass Or IsObject(Quick3270)=False Then 
+						FindSCDiaryandRun = micFail
+						Exit Function
+					End If
+					
+                End If
+
+            End With
+            
+    SCDairy = False
+    stRow = stRow + 1
+    Loop
+    
+    If SCDairy = False Then 
+		FindSCDiaryandRun = micFail
+    ElseIf SCDairy = True Then 
+		FindSCDiaryandRun = micPass
+    End If
+    
+End Function
+
+
+'################################################################################################################################
+'	FUNCTION NAME		: InitializeEmulator()
+
+'	DESCRIPTION			: Private Function which closes the emulator
+
+'	PARAMETERS		   : App --- Application - Valid Values are "APS"
+'											  Region -- Valid Values are "IST2","QA","RETRO2"
+
+'	DEPENDENCIES		: Execution machine should have Quick3270 Application installed.
+
+' 	RETURN VALUE(S): 
+'		micPass	 		: On successful execution of the function
+'		micFail	 		: On unsuccessful execution of the function
+
+'	ERRORS				: (None)
+
+'	AUTHOR				: Ramu Gurrapu
+
+'	ORIGINAL DATE		: Sep 22, 2008
+'-----------------------------------------------------------------------------------------------------------------------
+'			R E V I S I O N    H I S T O R Y
+'-----------------------------------------------------------------------------------------------------------------------
+'	REVISED DATE	: 	REVISED BY	 :	CHANGE DESCRIPTION
+'-----------------------------------------------------------------------------------------------------------------------
+
+Private Function InitializeEmulator(ByVal App, ByVal Region)
+       
+    'Identifying the enviorment and assigning appropriate command..
+    If UCase(Trim(App)) = "APS" And UCase(Trim(Region)) = "IST2" Then EnvString = "logon applid(CIT02COGap1)"       'Op-38
+	If UCase(Trim(App)) = "APS" And UCase(Trim(Region)) = "IST1" Then EnvString = "logon applid(CIT01APSap1)"      'Op-38
+    If UCase(Trim(App)) = "APS" And UCase(Trim(Region)) = "RETRO2" Then EnvString = "CIT04COG"     'Op-40
+	'If UCase(Trim(App)) = "APS" And UCase(Trim(Region)) = "QA" Then EnvString = "CIPQACOG"
+    If UCase(Trim(App)) = "APS" And UCase(Trim(Region)) = "QA" Then EnvString = "logon applid(cipqaap1)"         'Op-47
+	
+        
+    ServerIP = "10.140.33.48"
+
+	'This host name works for VDI machine
+	'ServerHostName="sysczos.20thcentins.com" 
+	ServerHostName="testzos.20thcentins.com" 'Added for Reflection
+    DRString = "AL22"
+
+    'Creating Object for Emulator Screen
+   ' Set Quick3270 = CreateObject("Quick3270.Application")
+   Set Quick3270 = CreateObject("ReflectionIBM.Session") 'Added for Reflection
+   
+    Quick3270.Visible = True
+    'Set Session = Quick3270.ActiveSession
+    'Set Screen = Session.Screen
+
+	Set Session = Quick3270 ' Added for Reflection
+    Set Screen = new ReflecitonClass
+
+	 Set Screen.ReflectionIBM = Quick3270	'Added for Reflection
+	               
+    'Connects to the Server
+    'Session.Server_Name = ServerIP
+	Session.Hostname =ServerHostName
+	Session.TelnetXSystem = False
+    Session.Connect
+
+    rc = StringWait("Type", 4, 2,"Current Step : Entered Server IP & Waiting for the Session to Connect")
+
+	If rc<>micPass Or isObject(Quick3270)=False Then
+		InitializeEmulator = micFail
+	Else
+		InitializeEmulator =micPass
+	End If
+
+window("Text:=Untitled - Reflection - IBM 3270 Terminal").Activate 
+                   
+End Function
+
+
+'################################################################################################################################
+'	FUNCTION NAME		: ExitEmulator()
+
+'	DESCRIPTION			: Private Function which closes the emulator
+
+'	PARAMETERS		   : None
+
+'	DEPENDENCIES		: Execution machine should have Quick3270 Application installed.
+
+' 	RETURN VALUE(S): 
+'		micPass	 		: On successful execution of the function
+'		micFail	 		: On unsuccessful execution of the function
+
+'	ERRORS				: (None)
+
+'	AUTHOR				: Ramu Gurrapu
+
+'	ORIGINAL DATE		: Sep 22, 2008
+'-----------------------------------------------------------------------------------------------------------------------
+'			R E V I S I O N    H I S T O R Y
+'-----------------------------------------------------------------------------------------------------------------------
+'	REVISED DATE	: 	REVISED BY	 :	CHANGE DESCRIPTION
+'-----------------------------------------------------------------------------------------------------------------------
+Private Function ExitEmulator()
+    
+    If tmpRes = True Then
+        With Screen
+            tmpRes = .WaitForString("COMMAND", 23, 2)
+            .MoveTo 23, 10
+            .SendKeys ("end")
+            .SendKeys ("<Enter>")
+        
+            tmpRes = .WaitForString("TERMINAL", 12, 21)
+            .SendKeys ("logoff")
+            .SendKeys ("<Enter>")
+        
+            tmpRes = .WaitForString("Type", 4, 2)
+            .SendKeys ("logoff")
+            .SendKeys ("<Enter>")
+        End With
+    End If
+    
+    ServerIP = vbNullString
+    
+    If Quick3270 is nothing then
+	else
+		Quick3270.Visible = False
+	end if
+	
+    Set Screen = Nothing
+    Set Session = Nothing
+    Set Quick3270 = Nothing
+    
+    EnvString = vbNullString
+    DRString = vbNullString
+    tmpRes = vbNullString
+
+	ExitEmulator = micPass
+					
+End Function
+
+
+'################################################################################################################################
+'	FUNCTION NAME		: StringWait()
+
+'	DESCRIPTION			: Public Function which waits for given string
+
+'	PARAMETERS		   : Strng  -- To be search string
+'											: Row - Row in which string needs to search
+'											: Col - Col in which string needs to search
+'											: ErrMessage - Err Message if String did nt find at given location.
+
+'	DEPENDENCIES		: Execution machine should have Quick3270 Application installed.
+
+' 	RETURN VALUE(S): 
+'		micPass	 		: On successful execution of the function
+'		micFail	 		: On unsuccessful execution of the function
+
+'	ERRORS				: (None)
+
+'	AUTHOR				: Ramu Gurrapu
+
+'	ORIGINAL DATE		: Sep 22, 2008
+'-----------------------------------------------------------------------------------------------------------------------
+'			R E V I S I O N    H I S T O R Y
+'-----------------------------------------------------------------------------------------------------------------------
+'	REVISED DATE	: 	REVISED BY	 :	CHANGE DESCRIPTION
+'-----------------------------------------------------------------------------------------------------------------------
+Private Function StringWait(ByVal Strng, ByVal Row, ByVal Col, ByVal ErrMessage)
+
+    tmpRes = Screen.WaitForString(Strng, Row, Col)           'Waits for USER ID Screen
+    If tmpRes <> True Then
+		ExitEmulator
+		StringWait = micFail
+		eMessage = ErrMessage
+	Else
+		StringWait = micPass
+    End If
+    
+End Function
+
+ '################################################################################################################################
+'	FUNCTION NAME		: ReflectionHandleRC(ByVal ReturnCode)
+'
+'	DESCRIPTION			: Process the return code of various functions, sent to it.
+'						  Captures the screen shot for any errors
+'
+'	PARAMETERS			:
+'			ReturnCode	: The error code.
+'			
+'	DEPENDENCIES		: (None)
+'    
+' 	RETURN VALUE(S)		: (None)
+'
+'	ERRORS				: (None)
+'
+'	AUTHOR				: Lenin
+'
+'	ORIGINAL DATE		: November 5 2008
+'-----------------------------------------------------------------------------------------------------------------------
+'			R E V I S I O N    H I S T O R Y
+'-----------------------------------------------------------------------------------------------------------------------
+'	REVISED DATE	: 	REVISED BY		:	CHANGE DESCRIPTION
+'-----------------------------------------------------------------------------------------------------------------------
+'
+'################################################################################################################################
+Public Function ReflectionHandleRC(ByVal ReturnCode)
+
+
+	Dim rc
+
+	On Error Resume Next
+	
+	'Sends a key stroke to keep system unlock
+	CreateObject("WScript.Shell").SendKeys "+"
+	
+	'In case of fail code and test case not failed already
+	If ReturnCode <> micPass And gbTestCaseStatus = micPass Then
+		If Err.Number <> micPass Then
+			gbErrDescription = "[" & Err.Number & "] " & Err.Description
+		End If
+		
+		'Fail or hold (warning) current test case
+		If ReturnCode = micWarning Then
+			gbTestCaseStatus = micWarning
+		Else
+			gbTestCaseStatus = micFail
+		End If
+		
+		'Captures the application screenshot
+		'CaptureScreenShot Browser(gbBrowserName)
+		CaptureScreenShot window("Text:=Untitled - Reflection - IBM 3270 Terminal")
+		
+		'Sends a key stroke to keep system unlock
+		CreateObject("WScript.Shell").SendKeys "+"
+		
+		'Check for application down
+		Eval( "Check" & gbApplicationName & "Status()")
+	End If
+	
+	ReflectionHandleRC = micPass
+End Function
+

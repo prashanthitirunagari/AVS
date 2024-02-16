@@ -1,0 +1,27 @@
+<Environment>
+	<Variable>
+		<Name>DistributedRun</Name>
+		<Value>FALSE</Value>
+	</Variable>
+	<Variable>
+		<Name>ServerPath</Name>
+		<Value>\\Hydnfil07\21c independent testing$\Automation Team\TestExecution\TestAutomation</Value>
+	</Variable>
+	<Variable>
+		<Name>TestDataBase</Name>
+		<Value>Automation_TestData_Dev.mdb</Value>
+	</Variable>
+	<Variable>
+		<Name>Project</Name>
+		<Value>Accident and Violations</Value>
+	</Variable>	
+	<Variable>
+	        <Name>TDMProjectName</Name>
+	        <Value>AVSAutomation</Value>
+        </Variable>
+
+	<Variable>
+		<Name>TDMPolicyCount</Name>
+		<Value>1</Value>
+	</Variable>
+</Environment>
